@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authorizer
+  namespace: k8sdeploy
+  labels:
+    name: authorizer
+spec:
+  selector:
+    matchLabels:
+      app: authorizer
+  template:
+    metadata:
+      labels:
+        app: authorizer
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: tygon
+          image: ghcr.io/k8sdeploy/authorizer:0.0.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DEVELOPMENT
+              value: "false"
+            - name: VAULT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: authorizer-vault-token
+                  key: token
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tygon-service
+  namespace: k8sdeploy
+  labels:
+    app: authorizer
+spec:
+  ports:
+    - port: 3000
+      protocol: TCP
+      targetPort: 3000
+  selector:
+    app: authorizer
